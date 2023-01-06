@@ -1,2 +1,2 @@
 # Relationship-transformation
-COde for paper "Relationship Transformation"
+Code for paper "Relationship Transformation"

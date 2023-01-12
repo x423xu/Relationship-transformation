@@ -21,7 +21,7 @@ class RealEstate10K_Downloader:
             t1.set_description(url)
             ydl_opts = {
                     'format': 'bestaudio/best',
-                    'outtmpl': os.path.join(self.output_dir,"{}.%(ext)s".format(name)),      
+                    'outtmpl': os.path.join(self.output_dir,'train', "{}.%(ext)s".format(name)),      
                    }      
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
@@ -32,7 +32,7 @@ class RealEstate10K_Downloader:
             t1.set_description(name)
             ydl_opts = {
                     'format': 'bestaudio/best',
-                    'outtmpl': os.path.join(self.output_dir,"{}.%(ext)s".format(name)),      
+                    'outtmpl': os.path.join(self.output_dir,'test', "{}.%(ext)s".format(name)),      
                    }      
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])

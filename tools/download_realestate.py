@@ -23,8 +23,11 @@ class RealEstate10K_Downloader:
                     'format': 'bestaudio/best',
                     'outtmpl': os.path.join(self.output_dir,'train', "{}.%(ext)s".format(name)),      
                    }      
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+            except:
+                continue
         
         t2 = tqdm(play_list_test)
         for pl in t2:  

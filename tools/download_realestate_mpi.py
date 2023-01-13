@@ -150,11 +150,16 @@ parser.add_argument('--parallel', default=False, action='store_true')
 args = parser.parse_args()
 
 if __name__=='__main__':
-    D = Downloader(dataroot=args.cameras_dir, mode=args.mode, output_root = args.videos_dir, num_workers=args.cpus_per_task)
-    list_data = D.list_data 
-    NTASKS = args.ntasks
-    split_data_list = np.array_split(np.array(list_data), NTASKS)
-    for n in range(NTASKS):
-        proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
-        proc.start()
-        proc.join()
+    dataroot = os.path.join(args.cameras_dir, args.mode)
+    output_root = os.path.join(args.videos_dir, args.mode)
+    D = Downloader(dataroot=dataroot, mode=args.mode, output_root = output_root, num_workers=args.cpus_per_task)
+    list_data = D.list_data
+    if args.parallel:
+        NTASKS = args.ntasks
+        split_data_list = np.array_split(np.array(list_data), NTASKS)
+        for n in range(NTASKS):
+            proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
+            proc.start()
+            proc.join()
+    else:
+        D.worker(list_data)

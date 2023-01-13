@@ -34,9 +34,9 @@ class Data:
 class Downloader():
     def __init__(self, dataroot, mode, output_root, num_workers = 1) -> None:
         print("[INFO] Loading data list ... ",end='')
-        self.dataroot = os.path.join(dataroot, mode)
+        self.dataroot = dataroot
         self.list_seqnames = sorted(glob.glob(dataroot + '/*.txt'))
-        self.output_root = os.path.join(output_root, mode)
+        self.output_root = output_root
         self.mode =  mode
         self.num_workers = num_workers
         if not os.path.exists(self.output_root):

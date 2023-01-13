@@ -145,21 +145,33 @@ parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstat
 parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
 parser.add_argument('--mode', default='train', type=str)
 parser.add_argument('--ntasks', default=8, type=int)
-parser.add_argument('--cpus_per_task', default=8, type=int)
+# parser.add_argument('--cpus_per_task', default=8, type=int)
 parser.add_argument('--parallel', default=False, action='store_true')
+
 args = parser.parse_args()
+args.cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
 
 if __name__=='__main__':
+    
     dataroot = os.path.join(args.cameras_dir, args.mode)
     output_root = os.path.join(args.videos_dir, args.mode)
     D = Downloader(dataroot=dataroot, mode=args.mode, output_root = output_root, num_workers=args.cpus_per_task)
     list_data = D.list_data
     if args.parallel:
+        procs = []
         NTASKS = args.ntasks
         split_data_list = np.array_split(np.array(list_data), NTASKS)
         for n in range(NTASKS):
             proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
             proc.start()
-            proc.join()
+            procs.append(proc)
+        try:
+            for p in procs:
+                p.join()
+        except KeyboardInterrupt:
+            for p in procs:
+                p.terminate()
+                p.join()
+            
     else:
         D.worker(list_data)

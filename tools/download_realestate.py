@@ -87,7 +87,7 @@ class DataDownloader:
             os.makedirs(self.output_root)
         else:
             print("[INFO] The output dir has already existed.")
-            # self.isDone = True
+            self.isDone = True
 
         self.list_data = []
         if not self.isDone:

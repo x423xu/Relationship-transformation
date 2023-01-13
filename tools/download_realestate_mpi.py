@@ -155,6 +155,6 @@ if __name__=='__main__':
     NTASKS = args.ntasks
     split_data_list = np.array_split(np.array(list_data), NTASKS)
     for n in range(NTASKS):
-        proc = Process(target = D.worker, args = (split_data_list[n],))
+        proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
         proc.start()
         proc.join()

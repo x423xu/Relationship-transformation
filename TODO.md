@@ -16,3 +16,9 @@
 - [RealEstate10K](https://google.github.io/realestate10k/download.html)
 
 2. What is the input format of the data?
+- images and cameras
+
+
+# code sructure
+- main: train/ val/ test
+- confgis: args

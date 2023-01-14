@@ -131,12 +131,12 @@ def process(data, seq_id, videoname, output_root):
     png_list = glob.glob(output_root+"/"+seqname+"/*.png")
 
     for pngname in png_list:
-        if os.path.exists(pngname):
-            print('{} exists'.format(pngname))
-            continue
+        if not os.path.exists(pngname):
+            raise '{} not exists'.format(pngname)
         image = io.imread(pngname)
         if int(image.shape[1]/2) < 500:
-            break
+            print('{} shape valid'.format(pngname))
+            continue
         image = imresize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
         io.imsave(pngname, image)
 

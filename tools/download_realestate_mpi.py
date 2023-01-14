@@ -135,7 +135,7 @@ def process(data, seq_id, videoname, output_root):
             raise '{} not exists'.format(pngname)
         image = io.imread(pngname)
         if int(image.shape[1]/2) < 500:
-            print('{} shape valid'.format(pngname))
+            print('{} shape is legal'.format(pngname))
             continue
         image = imresize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
         io.imsave(pngname, image)

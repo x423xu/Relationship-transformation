@@ -152,7 +152,7 @@ args = parser.parse_args()
 # args.cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
 
 if __name__=='__main__':
-    
+    print('ok')
     dataroot = os.path.join(args.cameras_dir, args.mode)
     output_root = os.path.join(args.videos_dir, args.mode)
     D = Downloader(dataroot=dataroot, mode=args.mode, output_root = output_root, num_workers=args.cpus_per_task)

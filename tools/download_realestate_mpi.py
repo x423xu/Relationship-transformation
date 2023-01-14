@@ -43,32 +43,33 @@ class Downloader():
             os.makedirs(self.output_root)
         self.list_data = []
         for txt_file in self.list_seqnames:
-                dir_name = txt_file.split('/')[-1]
-                seq_name = dir_name.split('.')[0]
+            print(txt_file)
+            dir_name = txt_file.split('/')[-1]
+            seq_name = dir_name.split('.')[0]
 
-                # extract info from txt
-                seq_file = open(txt_file, "r")
-                lines = seq_file.readlines()
-                youtube_url = ""
-                list_timestamps= []
-                for idx, line in enumerate(lines):
-                    if idx == 0:
-                        youtube_url = line.strip()
-                    else:
-                        timestamp = int(line.split(' ')[0])
-                        list_timestamps.append(timestamp)
-                seq_file.close()
+            # extract info from txt
+            seq_file = open(txt_file, "r")
+            lines = seq_file.readlines()
+            youtube_url = ""
+            list_timestamps= []
+            for idx, line in enumerate(lines):
+                if idx == 0:
+                    youtube_url = line.strip()
+                else:
+                    timestamp = int(line.split(' ')[0])
+                    list_timestamps.append(timestamp)
+            seq_file.close()
 
-                isRegistered = False
-                for i in range(len(self.list_data)):
-                    if youtube_url == self.list_data[i].url:
-                        isRegistered = True
-                        self.list_data[i].add(seq_name, list_timestamps)
-                    else:
-                        pass
+            isRegistered = False
+            for i in range(len(self.list_data)):
+                if youtube_url == self.list_data[i].url:
+                    isRegistered = True
+                    self.list_data[i].add(seq_name, list_timestamps)
+                else:
+                    pass
 
-                if not isRegistered:
-                    self.list_data.append(Data(youtube_url, seq_name, list_timestamps))
+            if not isRegistered:
+                self.list_data.append(Data(youtube_url, seq_name, list_timestamps))
 
             # self.list_data.reverse()
         print(" Done! ")

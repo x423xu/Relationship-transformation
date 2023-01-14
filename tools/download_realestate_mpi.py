@@ -110,7 +110,7 @@ def wrap_process(list_args):
 def process(data, seq_id, videoname, output_root):
     seqname = data.list_seqnames[seq_id]
     if not os.path.exists(os.path.join(output_root, seqname)):
-        os.makedirs(output_root + seqname)
+        os.makedirs(os.path.join(output_root, seqname)
 
     list_str_timestamps = []
     for timestamp in data.list_list_timestamps[seq_id]:

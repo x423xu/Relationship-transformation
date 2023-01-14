@@ -8,7 +8,7 @@ from time import sleep
 from skimage import io
 from cv2 import resize as imresize
 import numpy as np
-
+from tqdm import tqdm
 '''
 multiprocess for data download and process
 1. The whole train or test dataset can be divided into N parts, each part can be downloaded and processed by one independent process
@@ -42,8 +42,8 @@ class Downloader():
         if not os.path.exists(self.output_root):
             os.makedirs(self.output_root)
         self.list_data = []
-        for txt_file in self.list_seqnames:
-            print(txt_file)
+        for txt_file in tqdm(self.list_seqnames):
+
             dir_name = txt_file.split('/')[-1]
             seq_name = dir_name.split('.')[0]
 

@@ -110,7 +110,7 @@ def wrap_process(list_args):
 def process(data, seq_id, videoname, output_root):
     seqname = data.list_seqnames[seq_id]
     if not os.path.exists(os.path.join(output_root, seqname)):
-        os.makedirs(os.path.join(output_root, seqname)
+        os.makedirs(os.path.join(output_root, seqname))
 
     list_str_timestamps = []
     for timestamp in data.list_list_timestamps[seq_id]:
@@ -124,7 +124,7 @@ def process(data, seq_id, videoname, output_root):
 
     # extract frames from a video
     for idx, str_timestamp in enumerate(list_str_timestamps):
-        command = 'ffmpeg -ss '+str_timestamp+' -i '+videoname+' -vframes 1 -f image2 '+output_root+seqname+'/'+str(data.list_list_timestamps[seq_id][idx])+'.png'
+        command = 'ffmpeg -ss '+str_timestamp+' -i '+videoname+' -vframes 1 -f image2 '+output_root+'/'+seqname+'/'+str(data.list_list_timestamps[seq_id][idx])+'.png'
         # print("current command is {}".format(command))
         os.system(command)
 

@@ -144,12 +144,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
 parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
 parser.add_argument('--mode', default='train', type=str)
-parser.add_argument('--ntasks', default=8, type=int)
-# parser.add_argument('--cpus_per_task', default=8, type=int)
+parser.add_argument('--ntasks', default=4, type=int)
+parser.add_argument('--cpus_per_task', default=8, type=int)
 parser.add_argument('--parallel', default=False, action='store_true')
 
 args = parser.parse_args()
-args.cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
+# args.cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
 
 if __name__=='__main__':
     

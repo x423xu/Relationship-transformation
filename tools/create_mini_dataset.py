@@ -49,15 +49,17 @@ class Downloader():
 
             # extract info from txt
             seq_file = open(txt_file, "r")
+            with open(txt_file.replace('/pairs', '/'), "r") as fyt:
+                youtube_url = fyt.readline().strip()
             lines = seq_file.readlines()
-            youtube_url = ""
             list_timestamps= []
-            for idx, line in enumerate(lines):
-                if idx == 0:
-                    youtube_url = line.strip()
-                else:
-                    timestamp = int(line.split(' ')[0])
-                    list_timestamps.append(timestamp)
+            for line in lines:
+                timestamp_target = int(line.split(' ')[0])
+                timestamp_ref = int(line.split(' ')[1].strip())
+                if timestamp_target not in list_timestamps:
+                    list_timestamps.append(timestamp_target)
+                if timestamp_ref not in list_timestamps:
+                    list_timestamps.append(timestamp_ref)
             seq_file.close()
 
             isRegistered = False
@@ -144,7 +146,7 @@ def process(data, seq_id, videoname, output_root):
 parser = argparse.ArgumentParser()
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
 parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
-parser.add_argument('--mode', default='train', type=str)
+parser.add_argument('--mode', default='test', type=str)
 parser.add_argument('--ntasks', default=4, type=int)
 parser.add_argument('--cpus_per_task', default=8, type=int)
 parser.add_argument('--parallel', default=False, action='store_true')
@@ -154,10 +156,10 @@ args = parser.parse_args()
 
 if __name__=='__main__':
     
-    dataroot = os.path.join(args.cameras_dir, args.mode)
+    dataroot = os.path.join(args.cameras_dir, 'pairs', args.mode)
     output_root = os.path.join(args.videos_dir, args.mode)
     D = Downloader(dataroot=dataroot, mode=args.mode, output_root = output_root, num_workers=args.cpus_per_task)
-    list_data = D.list_data[:500]
+    list_data = D.list_data
     if args.parallel:
         procs = []
         NTASKS = args.ntasks

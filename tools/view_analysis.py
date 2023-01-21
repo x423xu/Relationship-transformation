@@ -151,6 +151,8 @@ class DataAnalysis():
         num_frames = len(frame_collected)
         print('{} {}/{}, {} pairs, {} frames'.format(k, n_total, self.len, np.array(mask).sum(), num_frames))
         if len(write_pair)>0:
+            if not os.path.exists(opj(self.annotation_dir, 'pairs',self.mode)):
+                os.makedirs(opj(self.annotation_dir, 'pairs',self.mode))
             with open(opj(self.annotation_dir, 'pairs',self.mode, k+'.txt'), 'w') as f:
                 for wp in write_pair:
                     for (ti, ri) in zip(*wp):

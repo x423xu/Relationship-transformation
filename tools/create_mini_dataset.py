@@ -126,13 +126,14 @@ def process(data, seq_id, videoname, output_root):
 
     # extract frames from a video
     for idx, str_timestamp in enumerate(list_str_timestamps):
-        command = 'ffmpeg -ss '+str_timestamp+' -i '+videoname+' -vframes 1 -f image2 '+output_root+'/'+seqname+'/'+str(data.list_list_timestamps[seq_id][idx])+'.png'
+        command = 'ffmpeg -loglevel error -y -ss '+str_timestamp+' -i '+videoname+' -vframes 1 -f image2 '+output_root+'/'+seqname+'/'+str(data.list_list_timestamps[seq_id][idx])+'.png'
         # print("current command is {}".format(command))
         os.system(command)
 
     png_list = glob.glob(output_root+"/"+seqname+"/*.png")
 
-    for pngname in png_list:
+    for n, pngname in enumerate(png_list):
+        # print('{}/{}'.format(n, len(png_list)))
         if not os.path.exists(pngname):
             raise '{} not exists'.format(pngname)
         image = io.imread(pngname)

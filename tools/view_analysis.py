@@ -91,7 +91,7 @@ class DataAnalysis():
 
     def _parse_txt(self):
         if os.path.exists('parse_{}.npy'.format(self.mode)):
-            return np.load('parse_{}.npy'.format(self.mode), allow_pickle=True)
+            return np.load('parse_{}.npy'.format(self.mode), allow_pickle=True).item()
         annotation_files = glob(opj(self.annotation_dir, self.mode, '*.txt'))
         annotations = {}
         for af in tqdm(annotation_files):
@@ -209,5 +209,5 @@ class DataAnalysis():
 
         print('total frames to be downloaded {}'.format(total_frames))
 
-D = DataAnalysis(mode = 'train', num_worksers = 6)
+D = DataAnalysis(mode = 'test', num_worksers = 6)
 D.get_valid_image_pairs()

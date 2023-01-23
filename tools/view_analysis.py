@@ -90,8 +90,8 @@ class DataAnalysis():
         return dAngle, dtrans
 
     def _parse_txt(self):
-        if os.path.exists('parse.npy'):
-            return np.load('parse.npy', allow_pickle=True)
+        if os.path.exists('parse_{}.npy'.format(self.mode)):
+            return np.load('parse_{}.npy'.format(self.mode), allow_pickle=True)
         annotation_files = glob(opj(self.annotation_dir, self.mode, '*.txt'))
         annotations = {}
         for af in tqdm(annotation_files):
@@ -106,7 +106,7 @@ class DataAnalysis():
                         anno = line.strip().split(' ')
                         # anno[1:] = [float(l) for l in anno[1:]]
                         annotations[seq_name].append(anno)
-        np.save('parse.npy', annotations)
+        np.save('parse_{}.npy'.format(self.mode), annotations)
         return annotations
     
     def _create_image_pairs(self, seq_annotation, skip = 10):
@@ -209,5 +209,5 @@ class DataAnalysis():
 
         print('total frames to be downloaded {}'.format(total_frames))
 
-D = DataAnalysis(mode = 'test', num_worksers = 6)
+D = DataAnalysis(mode = 'train', num_worksers = 6)
 D.get_valid_image_pairs()

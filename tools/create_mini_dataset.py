@@ -15,6 +15,7 @@ multiprocess for data download and process
 2. Inside a process, multiple threads can be spawned to 
 
 '''
+TMP_DIR = os.getenv('SLURM_TMPDIR')
 class Data:
     def __init__(self, url, seqname, list_timestamps):
         self.url = url
@@ -36,7 +37,12 @@ class Downloader():
         print("[INFO] Loading data list ... ",end='')
         self.dataroot = dataroot
         self.list_seqnames = sorted(glob.glob(dataroot + '/*.txt'))
-        self.output_root = output_root
+        self.dest_dir = None
+        if TMP_DIR is not None:
+            self.output_root = output_root
+        else:
+            self.output_root = TMP_DIR
+            self.dest_dir = output_root
         self.mode =  mode
         self.num_workers = num_workers
         if not os.path.exists(self.output_root):
@@ -81,7 +87,7 @@ class Downloader():
         curr_proc = multiprocessing.current_process()
         print("[INFO] Start downloading {} movies, current process: {}".format(len(data_list), curr_proc.name))
         for global_count, data in enumerate(data_list):
-            print("[INFO] Downloading {}/{}: {} ".format(global_count, len(data_list),  data.url))
+            print("[INFO] Process {} Downloading {}/{}: {} ".format(curr_proc.name, global_count, len(data_list),  data.url))
             try :
                 # sometimes this fails because of known issues of pytube and unknown factors
                 yt = YouTube(data.url)
@@ -105,6 +111,9 @@ class Downloader():
             # remove videos
             command = "rm " + videoname 
             os.system(command)
+    def copy_worker(self):
+        if self.dest_dir is not None:
+            os.system('cp -n -r {}/* {}'.format(self.output_root, self.dest_dir))
 
 def wrap_process(list_args):
     return process(*list_args)
@@ -143,14 +152,16 @@ def process(data, seq_id, videoname, output_root):
         image = imresize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
         io.imsave(pngname, image)
 
+    
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
 parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
 parser.add_argument('--mode', default='test', type=str)
 parser.add_argument('--ntasks', default=4, type=int)
-parser.add_argument('--cpus_per_task', default=8, type=int)
-parser.add_argument('--parallel', default=False, action='store_true')
+parser.add_argument('--cpus_per_task', default=4, type=int)
+parser.add_argument('--parallel', default=True, action='store_true')
 
 args = parser.parse_args()
 # args.cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK',default=1))
@@ -166,7 +177,10 @@ if __name__=='__main__':
         NTASKS = args.ntasks
         split_data_list = np.array_split(np.array(list_data), NTASKS)
         for n in range(NTASKS):
-            proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
+            if n==0:
+                proc = Process(target = D.copy_worker, name = 'process_{}'.format(n))
+            else:
+                proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
             proc.start()
             procs.append(proc)
         try:

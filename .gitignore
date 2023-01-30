@@ -2,3 +2,5 @@
 *.tmp
 *.txt
 *.npy
+*.png
+experiments/

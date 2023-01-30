@@ -38,7 +38,7 @@ class Downloader():
         self.dataroot = dataroot
         self.list_seqnames = sorted(glob.glob(dataroot + '/*.txt'))
         self.dest_dir = None
-        if TMP_DIR is not None:
+        if TMP_DIR is None:
             self.output_root = output_root
         else:
             self.output_root = TMP_DIR

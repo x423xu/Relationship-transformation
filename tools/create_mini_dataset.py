@@ -15,7 +15,8 @@ multiprocess for data download and process
 2. Inside a process, multiple threads can be spawned to 
 
 '''
-TMP_DIR = os.getenv('SLURM_TMPDIR')
+# TMP_DIR = os.getenv('SLURM_TMPDIR')
+TMP_DIR = None
 class Data:
     def __init__(self, url, seqname, list_timestamps):
         self.url = url

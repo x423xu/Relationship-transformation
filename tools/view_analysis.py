@@ -1,7 +1,7 @@
 
 '''
 Analyze the angle changes in each sequence. Keep frames with angle changes greater than $threshold$. Remove trivial angle changes.
-The best case is the camera face to the same center, while the position and angle changes.
+The best case is when cameras face to the same center, while the position and angle changes.
 '''
 import numpy as np
 from math import sqrt

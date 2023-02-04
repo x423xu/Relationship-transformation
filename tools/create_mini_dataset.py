@@ -176,11 +176,8 @@ if __name__=='__main__':
         procs = []
         NTASKS = args.ntasks
         split_data_list = np.array_split(np.array(list_data), NTASKS)
-        for n in range(NTASKS):
-            if n==0:
-                proc = Process(target = D.copy_worker, name = 'process_{}'.format(n))
-            else:
-                proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
+        for n in range(NTASKS):       
+            proc = Process(target = D.worker, args = (split_data_list[n],), name = 'process_{}'.format(n))
             proc.start()
             procs.append(proc)
         try:

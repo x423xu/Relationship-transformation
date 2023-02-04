@@ -89,6 +89,7 @@
 # plt.show()
 
 import os
+os.environ['DEBUG'] = '0'
 from pprint import pprint
 from glob import glob
 import matplotlib.pyplot as plt
@@ -97,6 +98,7 @@ import cv2
 import torch
 import torch.nn as nn
 from PIL import Image
+import h5py
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 '''
 Warp an image to another viewpoint (homogenous) image based on estimated depth value
@@ -110,34 +112,192 @@ steps:
 '''
 given image, depth map, intrinsics, camera poses -> mapping
 '''
+EPS = 1e-2
+
+class Hook():
+    def __init__(self, d=None) -> None:
+        self._data = d
+
+    @property
+    def data(self):
+        return self._data
+    
+    @data.setter
+    def data(self, d):
+        self._data = d
+
 class Warp():
-    def __init__(self, image_name, depth, intrinsics, camera_pose) -> None:
-        self.img = Image.open(image_name)
-        self.depth = depth
-        self.intrinsics = intrinsics
-        self.camera_pose = camera_pose
+    def __init__(self) -> None:
+        pass
+    
+    def plot_relationship(self, filename, filename2 = None, pts3D = None, num_relation = 5):
+        img = cv2.imread(filename)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        h,w = img.shape[:2]
+        nw, nh = 1000, int(h*1000/w)
+        img = cv2.resize(img, (nw, nh))
+        img2 = np.array(Image.open(filename2))
+        _, ext = os.path.splitext(filename)
+        rel_path = filename.replace(ext, '.h5')
+        if not os.path.exists(rel_path):
+            raise 'No relationship file'
+        f = h5py.File(rel_path, 'r')
+        bbox_f = np.array(f['bbox'])
+        # bbox[:,0], bbox[:,2] = (bbox[:,0]*w), (bbox[:,2]*w)
+        # bbox[:,1], bbox[:,3] = (bbox[:,1]*h), (bbox[:,3]*h)
+        bbox = bbox_f.copy().astype(np.int16)
+        # rel_all_scores = np.array(f['rel_all_scores'])
+        rel_pairs = np.array(f['rel_pairs'])
+        top_pairs = rel_pairs[:num_relation]
+        top_boxes_subj = bbox[top_pairs[:,0]]
+        top_boxes_obj = bbox[top_pairs[:,1]]
+        img = self._plot_single_img(img, top_boxes_subj, top_boxes_obj)
+        '''
+        transformed
+        '''
+        pts3D = pts3D.squeeze().detach().cpu().numpy()
+        pts3D[:,1] = (- pts3D[:,1])*128+128
+        pts3D[:,0] = (- pts3D[:,0])*128+128
+        pts3D[pts3D<0] = 0
+        pts3D[pts3D>255] = 255
+        pts3D = pts3D.astype(np.int16)
 
-    def mapping(self):
-        K = self.intrinsics
-        R = self.camera_pose[:,:3]
-        T = self.camera_pose[:,3]
-        height, width = self.depth.shape[:2]
-        points = np.array([[[x, y, self.depth[y, x]] for x in range(width)] for y in range(height)])
-        points = points.reshape(-1, 3)
-        points = cv2.reprojectImageTo3D(points, Q=None)
-        points = points.reshape(height, width, 3)
-        points = np.dot(np.dot(np.linalg.inv(K), R), points)
-        points = points / points[2]
-        points = np.dot(K, points)
-        image_new = np.zeros((height, width, 3), dtype=np.uint8)
-        for y in range(height):
-            for x in range(width):
-                x_new = int(points[y, x, 0])
-                y_new = int(points[y, x, 1])
-                if 0 <= x_new < width and 0 <= y_new < height:
-                    image_new[y_new, x_new] = self.img[y, x]
-        return image_new
+        img2 = cv2.resize(img2, [256,256])
+        bbox_t = bbox_f.copy()
+        bbox_t[:, 0::2] = bbox_t[:, 0::2]*256/nw
+        bbox_t[:, 1::2] = bbox_t[:, 1::2]*256/nh
+        bbox_t = bbox_t.astype(np.int16)
+        new_bbox = []
+        for bt in bbox_t:
+            x1y1 = pts3D[bt[1]*256+bt[0], :2]
+            x2y2 = pts3D[bt[3]*256+bt[2], :2]
+            new_bbox.append(np.hstack([x1y1,x2y2]))
+        new_bbox = np.vstack(new_bbox)
+        top_boxes_subj = new_bbox[top_pairs[:,0]]
+        top_boxes_obj = new_bbox[top_pairs[:,1]]
+        img2 = self._plot_single_img(img2, top_boxes_subj, top_boxes_obj)
 
+        
+        img3 = cv2.imread(filename2)
+        img3 = cv2.cvtColor(img3, cv2.COLOR_BGR2RGB)
+        h,w = img3.shape[:2]
+        nw, nh = 1000, int(h*1000/w)
+        img3 = cv2.resize(img3, (nw, nh))
+        _, ext = os.path.splitext(filename2)
+        rel_path = filename2.replace(ext, '.h5')
+        if not os.path.exists(rel_path):
+            raise 'No relationship file'
+        f = h5py.File(rel_path, 'r')
+        bbox_f = np.array(f['bbox'])
+        # bbox[:,0], bbox[:,2] = (bbox[:,0]*w), (bbox[:,2]*w)
+        # bbox[:,1], bbox[:,3] = (bbox[:,1]*h), (bbox[:,3]*h)
+        bbox = bbox_f.copy().astype(np.int16)
+        # rel_all_scores = np.array(f['rel_all_scores'])
+        rel_pairs = np.array(f['rel_pairs'])
+        top_pairs = rel_pairs[:num_relation]
+        top_boxes_subj = bbox[top_pairs[:,0]]
+        top_boxes_obj = bbox[top_pairs[:,1]]
+        img3 = self._plot_single_img(img3, top_boxes_subj, top_boxes_obj)
+        plt.figure()
+        plt.subplot(1,3,1)
+        plt.imshow(img)
+        plt.subplot(1,3,2)
+        plt.imshow(cv2.resize(img2, (w,h)))
+        plt.subplot(1,3,3)
+        plt.imshow(img3)
+        # plt.show()
+
+        return img, img2
+        
+        
+        
+    
+    def _plot_single_img(self, img, top_boxes_subj,top_boxes_obj):
+        for sb, ob in zip(top_boxes_subj, top_boxes_obj):
+            img = cv2.rectangle(img, sb[:2], sb[2:], color = [255,0,0])
+            img = cv2.rectangle(img, ob[:2], ob[2:], color = [255,0,0])
+            img = cv2.line(img, (sb[2], sb[3]), (ob[2], ob[3]), color=[0,0,255])
+        return img
+
+        
+
+    def mapping(self, filename, depth, K, P1, P2, filename2 = None):
+        offset = np.array(
+            [[2, 0, -1], [0, -2, 1], [0, 0, -1]],  # Flip ys to match habitat
+            dtype=np.float32,
+        ) 
+        K_identity = np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        invK_indentity = np.linalg.inv(K_identity)
+        K = np.matmul(offset, K)
+        RT_cam1 = np.matmul(K, P1)
+        RT_cam1= np.vstack((RT_cam1, np.zeros((1, 4), dtype=np.float32))).astype(
+                np.float32
+            )
+        RT_cam1[3, 3] = 1
+        RTinv_cam1 = np.linalg.inv(RT_cam1)
+
+        RT_cam2 = np.matmul(K, P2)
+        RT_cam2= np.vstack((RT_cam2, np.zeros((1, 4), dtype=np.float32))).astype(
+                np.float32
+            )
+        RT_cam2[3, 3] = 1
+        RTinv_cam2 = np.linalg.inv(RT_cam2)
+        def _to_tensor(kwargs):
+            rs = []
+            for k in kwargs:
+                rs.append(torch.Tensor(k).unsqueeze(0).to(device))
+            return rs
+        K_identity, invK_indentity, RT_cam1, RTinv_cam1, RT_cam2, RTinv_cam2 = _to_tensor([K_identity, invK_indentity, RT_cam1, RTinv_cam1, RT_cam2, RTinv_cam2])
+        gen_img, pointclouds = self.mapping_from_synsin(filename, depth, K_identity, invK_indentity, RT_cam1, RTinv_cam1, RT_cam2, RTinv_cam2)
+        ori_img_plot = self.plot_relationship(filename, pts3D=pointclouds, filename2=filename2)
+        return gen_img
+
+
+    def mapping_from_synsin(self, filename, depth, K, K_inv, RT_cam1, RTinv_cam1, RT_cam2, RTinv_cam2):
+        import sys
+        sys.path.insert(1,'/home/xxy/Documents/github/synsin')
+        from options.options import get_model
+        torch.backends.cudnn.enabled = True
+        import torch.nn as nn
+        import torchvision.transforms as transforms
+        from models.base_model import BaseModel
+        from models.networks.sync_batchnorm import convert_model
+        MODEL_PATH = '/home/xxy/Documents/github/synsin/modelcheckpoints/realestate/zbufferpts.pth'
+        opts = torch.load(MODEL_PATH)['opts']
+        opts.render_ids = [1]
+        # vs = vars(opts)
+        # vs['pp_pixel'] = 1
+        # vs['radius'] = 1
+        print(opts)
+        model = get_model(opts)
+        torch_devices = [int(gpu_id.strip()) for gpu_id in opts.gpu_ids.split(",")]
+        if 'sync' in opts.norm_G:
+            model = convert_model(model)
+            model = nn.DataParallel(model, torch_devices[0:1]).cuda()
+        else:
+            model = nn.DataParallel(model, torch_devices[0:1]).cuda()
+
+        model_to_test = BaseModel(model, opts)
+        model_to_test.load_state_dict(torch.load(MODEL_PATH)['state_dict'])
+        model_to_test.eval()
+        transform = transforms.Compose([
+            transforms.Resize((256,256)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transform_model = model_to_test.model.module.pts_transformer.forward_justpts
+        img = Image.open(filename)
+        input= transform(img).unsqueeze(0).to(device)
+        hook = Hook()
+        gen_img = transform_model(input, depth, K, K_inv, RT_cam1, RTinv_cam1, RT_cam2, RTinv_cam2, hook)
+        return gen_img, hook.data
 
 '''
 Given the image return a depth map
@@ -153,10 +313,8 @@ class GetDepth():
         if self.model_mode == 'midas':
             depth = self.get_depth_from_midas(filename)
         
-        depth = depth.detach().cpu().squeeze().numpy()
-        cv2.imwrite('./depth.png', depth)
-        # plt.imshow(depth)
-        # plt.show()
+        depth_save = depth.detach().cpu().squeeze().numpy()
+        cv2.imwrite('./depth.png', depth_save)
         return depth
     
     def get_depth_from_synsin(self, filename):
@@ -193,16 +351,20 @@ class GetDepth():
         input_batch = transform(img).unsqueeze(0).to(device)
         prediction = depth_model(input_batch)
         prediction = nn.Sigmoid()(prediction)
+        # prediction = (torch.rand(prediction.shape)).to(device)
+        prediction = prediction * (opts.max_z - opts.min_z) + opts.min_z
         return prediction
 
 
     def get_depth_from_midas(self, filename):
+        import torchvision.transforms as transforms
         model_type = "MiDaS_small"
         # model_type = 'DPT_Large'
         midas = torch.hub.load("intel-isl/MiDaS", model_type)
         midas.to(device)
         midas.eval()
         midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
+        resize_transform = transforms.Resize((256,256))
 
         if model_type == "DPT_Large" or model_type == "DPT_Hybrid":
             transform = midas_transforms.dpt_transform
@@ -212,13 +374,14 @@ class GetDepth():
         img = cv2.imread(filename)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        input_batch = transform(img).to(device)
+        input_batch = resize_transform(transform(img)).to(device)
         prediction = midas(input_batch)
-        # prediction =  1/prediction
-        return prediction
+        # prediction = (prediction/prediction.max())
+        # prediction = 1/(nn.Sigmoid()(prediction)*100+0.01)
+        prediction = 1/prediction  
+        prediction = 100 *(prediction-prediction.min())/(prediction.max()-prediction.min())+0.01
+        return prediction.unsqueeze(0)
         
-        
-
 
 '''
 Given the image path of the RealEstate10K
@@ -256,22 +419,71 @@ class ImageReader_RealEstate10K():
         mat1 = np.vstack((mat1, np.array([0, 0, 0, 1])))
         mat2 = np.vstack((mat2, np.array([0, 0, 0, 1])))
 
-        dMat = np.matmul(np.linalg.inv(mat1), mat2)
+        dMat = np.matmul(mat2, np.linalg.inv(mat1))
         return dMat
 
+
+'''
+map one single pixel to a transformed view
+image coordinate: (u,v), K1, P1 -> camera coordinate -> world coordinare -> K2, P2, new viewpoint
+'''
+class MyMap():
+    def __init__(self) -> None:
+        pass
+    
+    def map(self, img1, img2, depth, K , T):
+        img1 = np.array(Image.open(img1))
+        img2 = np.array(Image.open(img2))
+        # img1 = cv2.resize(img1, [256, 256])
+        s, t = 1, 0
+        depth = s*depth + t
+        '''step1: pixel to relative'''
+        w, h = img1.shape[:2]
+        u, v ,w = 100, 100, 1
+        ur = u/w
+        vr = v/h
+        fx = K[0,0]
+        fy = K[1,1]
+        cx = K[0,2]
+        cy = K[1,2]
+        x_prime = (ur-cx)/fx
+        y_prime = (vr-cy)/fy
+        z_prime = depth[u,v]
+        x_tilde = x_prime * z_prime
+        y_tilde = y_prime * z_prime
+        z_tilde = z_prime
+        camera_point = np.array([x_tilde, y_tilde, z_tilde, 1])
+        mapped_point = K@T[:3,:]@camera_point
+        print(mapped_point)
+
+
 def main():
-    reader = ImageReader_RealEstate10K('/home/xxy/Documents/data/RealEstate10K/test/0c0f298ace7c875b.txt',
-                                       '/home/xxy/Documents/data/RealEstate10K/videos/test/0c0f298ace7c875b')
+    reader = ImageReader_RealEstate10K('/home/xxy/Documents/data/RealEstate10K/test/0a9f2831a3e73de8.txt',
+                                       '/home/xxy/Downloads/tmp_data/0a9f2831a3e73de8')
     GD = GetDepth('synsin')
     
-    img_name, K, P1 = reader.get_one_frame(0)
-    print(img_name)
-    _, _, P2 = reader.get_one_frame(100)
-    RelP = reader.get_relative_parameters(P1,P2)
+    img_name, K, P1 = reader.get_one_frame(50)
+    
+    name2, _, P2 = reader.get_one_frame(20)
+    # T = reader.get_relative_parameters(P1, P2)
+    print(img_name, name2)
     depth = GD.get_depth(img_name)
-    W = Warp(img_name, depth, K, RelP)
-    image_new = W.mapping()
-    plt.show(image_new)
+    # M = MyMap()
+    # M.map(img_name, name2, depth.squeeze().detach().cpu().numpy(), K, T)
+    W = Warp()
+    image_new = W.mapping(img_name, depth, K, P1, P2, filename2=name2)
+    image_new = image_new.squeeze().permute(1,2,0).detach().cpu().numpy()
+    
+    img = np.array(Image.open(img_name))
+    image_new = cv2.resize(image_new,img.shape[:2][::-1])
+    plt.figure()
+    plt.subplot(1,3,1)
+    plt.imshow(img)
+    img2 = np.array(Image.open(name2))
+    plt.subplot(1,3,2)
+    plt.imshow(img2)
+    plt.subplot(1,3,3)
+    plt.imshow(image_new)
     plt.show()
 
 if __name__=='__main__':

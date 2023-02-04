@@ -3,4 +3,6 @@
 *.txt
 *.npy
 *.png
+*.npz
+*.npy
 experiments/

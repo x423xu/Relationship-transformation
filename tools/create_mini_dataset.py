@@ -15,8 +15,7 @@ multiprocess for data download and process
 2. Inside a process, multiple threads can be spawned to 
 
 '''
-# TMP_DIR = os.getenv('SLURM_TMPDIR')
-TMP_DIR = None
+
 class Data:
     def __init__(self, url, seqname, list_timestamps):
         self.url = url
@@ -38,12 +37,7 @@ class Downloader():
         print("[INFO] Loading data list ... ",end='')
         self.dataroot = dataroot
         self.list_seqnames = sorted(glob.glob(dataroot + '/*.txt'))
-        self.dest_dir = None
-        if TMP_DIR is None:
-            self.output_root = output_root
-        else:
-            self.output_root = TMP_DIR
-            self.dest_dir = output_root
+        self.output_root = output_root
         self.mode =  mode
         self.num_workers = num_workers
         if not os.path.exists(self.output_root):
@@ -112,9 +106,6 @@ class Downloader():
             # remove videos
             command = "rm " + videoname 
             os.system(command)
-    def copy_worker(self):
-        if self.dest_dir is not None:
-            os.system('cp -n -r {}/* {}'.format(self.output_root, self.dest_dir))
 
 def wrap_process(list_args):
     return process(*list_args)
@@ -158,8 +149,9 @@ def process(data, seq_id, videoname, output_root):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
-parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
-parser.add_argument('--mode', default='test', type=str)
+# parser.add_argument('--videos_dir', default='/home/xxy/Documents/data/RealEstate10K/videos', type=str)
+parser.add_argument('--videos_dir', default='/home/xxy/HDD', type=str)
+parser.add_argument('--mode', default='train', type=str)
 parser.add_argument('--ntasks', default=4, type=int)
 parser.add_argument('--cpus_per_task', default=4, type=int)
 parser.add_argument('--parallel', default=True, action='store_true')
@@ -187,7 +179,6 @@ if __name__=='__main__':
         except KeyboardInterrupt:
             for p in procs:
                 p.terminate()
-                p.join()
-            
+                p.join()          
     else:
         D.worker(list_data)

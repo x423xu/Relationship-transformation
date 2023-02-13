@@ -1,7 +1,4 @@
-
-models_zoo={
-    '':''
-}
+from .model import PLPredictionModule
 
 def make_model(args):
-    return None
+    return PLPredictionModule(args)

@@ -1,0 +1,49 @@
+'''
+Relationship Spatialization
+'''
+
+import torch
+import torch.nn as nn
+import numpy as np
+
+
+class RSModel(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def interpolate(
+        self, rel_features, bbox, size
+    ):  # (b,128,1024,1)->(b, 128, 240, 320),bbox(b,256,8)
+        out = torch.zeros(
+            [rel_features.shape[0], rel_features.shape[1], size[0], size[1]],
+            dtype=rel_features.dtype,
+            device=rel_features.device,
+        )
+        # print(rel_features.shape, out.shape, bbox.shape)
+        interpolate_ = nn.functional.interpolate
+        [h, w] = size
+        sub_box = bbox[:, :, :4].int() // 2
+        obj_box = bbox[:, :, 4:].int() // 2
+        # sub_box = sub_box.cpu().numpy()
+        # obj_box = obj_box.cpu().numpy()
+        for i in range(bbox.shape[0]):
+            for j in range(bbox.shape[1]):
+                sx1, sy1, sx2, sy2 = sub_box[i, j, :]
+                sh, sw = sy2 - sy1, sx2 - sx1
+                if sh < 5 or sw < 5:
+                    continue
+                sf = interpolate_(rel_features[i, :, :].unsqueeze(0), size=[sh, sw])
+                ox1, oy1, ox2, oy2 = obj_box[i, j, :]
+                oh, ow = oy2 - oy1, ox2 - ox1
+                if oh < 5 or ow < 5:
+                    continue
+                of = interpolate_(rel_features[i, :, :].unsqueeze(0), size=[oh, ow])
+                out[i, :, sy1:sy2, sx1:sx2] += sf.squeeze()
+                out[i, :, oy1:oy2, ox1:ox2] += of.squeeze()
+        return out
+
+    def forward(self, rel_features, bbox, size):
+        return self.interpolate(rel_features, bbox=bbox, size=size)
+
+
+

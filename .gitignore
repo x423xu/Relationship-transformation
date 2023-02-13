@@ -3,7 +3,11 @@
 *.txt
 *.npy
 *.png
+*.jpg
 *.npz
 *.npy
 experiments/
 __pycache__
+lightning_logs
+*.pth
+*.pt

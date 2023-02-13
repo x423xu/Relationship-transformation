@@ -4,6 +4,7 @@ from PIL import Image
 import torch
 import os
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+import h5py
 
 '''
 Dataset for RealEstate10K relationships
@@ -60,6 +61,23 @@ class RealEstate10KRelationships(data.Dataset):
         img = self.transform(img)
         return img
     
+    def load_rel(self,seq_name, timestamp):
+        rel_name = os.path.join(self.args.frames_dir, self.mode, seq_name, timestamp+'.h5')
+        with h5py.File(rel_name, 'r') as f:
+            rel_features = np.array(f["rel_features"])
+            bbox = np.array(f["bbox"])
+            idx_pairs = np.array(f["idx_pairs"])
+            labels = np.array(f["labels"])
+        return {
+            'rel_features':rel_features,
+            'bbox': bbox,
+            'idx_pairs': idx_pairs,
+            'labels': labels
+        }
+    
+    '''
+    given camera text file, return intrinsic, camera pose
+    '''
     def get_camera_params(self, camera_txt, timestamp):
         if self.mode =='train' or self.mode == 'val':
             path = os.path.join(self.args.cameras_dir, 'train', camera_txt)
@@ -84,7 +102,7 @@ class RealEstate10KRelationships(data.Dataset):
                     return K,P
             raise "{}: {} not found in {}".format(self.mode, timestamp, camera_txt)
 
-
+    
     def __getitem__(self, index):
         pair = self.train_val_test_pairs[self.mode][index]
         camera_txt = pair[0]
@@ -97,10 +115,12 @@ class RealEstate10KRelationships(data.Dataset):
         # R2, bbox2 = self.get_rel(seq_name, t2)
         K, P1 = self.get_camera_params(camera_txt, t1)
         _, P2 = self.get_camera_params(camera_txt, t2)
-        R1 = torch.zeros([1, 6032, 128])
-        B1 = torch.zeros([1, 6032, 8])
-        R2 = torch.zeros([1, 6032, 128])
-        B2 = torch.zeros([1, 6032, 8])
+        # R1 = torch.zeros([1, 6032, 128])
+        # B1 = torch.zeros([1, 6032, 8])
+        # R2 = torch.zeros([1, 6032, 128])
+        # B2 = torch.zeros([1, 6032, 8])
+        R1 = self.load_rel(seq_name, t1)
+        R2 = self.load_rel(seq_name, t2)
 
         #modify to be compatible with habitat
         K = np.matmul(self.offset, K)
@@ -123,7 +143,6 @@ class RealEstate10KRelationships(data.Dataset):
             'P': [P1, P2],
             'Pinv': [P1inv, P2inv],
             'R': [R1, R2],
-            'B': [B1,B2],
         }
     
     def __len__(self):

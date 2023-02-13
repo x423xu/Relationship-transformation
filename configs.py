@@ -18,7 +18,7 @@ parser.add_argument('--dataset', default='real_estate', type=str)
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
 parser.add_argument('--frames_dir', default='/home/xxy/Documents/data/RealEstate10K/benchmark_frames', type=str)
 parser.add_argument('--W', default=256, type=int, help='width of input image')
-parser.add_argument('--num_workers', default=8, type=int, help='number of workers')
+parser.add_argument('--num_workers', default=1, type=int, help='number of workers')
 
 '''
 args for train
@@ -63,7 +63,7 @@ parser.add_argument('--monitor', default='val_loss', type=str)
 parser.add_argument('--monitor_mode', default='min', type=str)
 # parser.add_argument('--checkpoint_filename', default="drs-{epoch:02d}-{val_loss:.2f}", type=str)
 parser.add_argument('--resume_dir', default='experiments/checkpoints/Relationship transformation-epoch=00-val_loss=0.00.ckpt', type=str)
-parser.add_argument('--resume', default=True, type=bool)
+parser.add_argument('--resume', default=False, type=bool)
 '''
 args for profiler
 '''

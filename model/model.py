@@ -5,9 +5,10 @@ import pytorch_lightning as pl
 import torch.nn as nn
 
 from metrics import make_metrics
+from .networks.z_buffermodel import ZbufferModelPts
 
 
-class PredictionModel(nn.Module):
+class RelTrans(nn.Module):
 
 
     def __init__(
@@ -16,13 +17,11 @@ class PredictionModel(nn.Module):
 
         super().__init__()
         self.args = args
-        self.rel_map = nn.Conv2d(1,1,1)
-        self.box_map = nn.Conv2d(1,1,1)
+        self.model = ZbufferModelPts(args)
 
     def forward(self, R: torch.Tensor, B: torch.Tensor) -> Union[torch.Tensor, Dict]:
 
-        Ro = self.rel_map(R)
-        Bo = self.box_map(B)
+        Ro, Bo,  = self.model(R, B)
 
         return Ro,Bo
 
@@ -36,7 +35,7 @@ class PLPredictionModule(pl.LightningModule):
     def __init__(self, args) -> None:
         super().__init__()
         self.args = args
-        self.model = PredictionModel(args)
+        self.model = RelTrans(args)
         # self.losses = make_metrics()
         self.losses = nn.MSELoss()
 

@@ -46,4 +46,23 @@ class RSModel(nn.Module):
         return self.interpolate(rel_features, bbox=bbox, size=size)
 
 
+class Reprojector(nn.Module):
+    def __init__(self, rel_dim = 51) -> None:
+        super().__init__()
+        self.rel_dim = rel_dim
+        self.embedding = nn.MultiheadAttention(rel_dim, 1)
+        self.query_embedding = nn.Conv2d(256,256,3,1,1)
+        self.key_embedding = nn.Conv2d(256,256,3,1,1)
+        self.value_embedding = nn.Conv2d(256,256,3,1,1)
+
+    def forward(self, fs):
+        query = self.query_embedding(fs)
+        key = self.key_embedding(fs)
+        value = self.value_embedding(fs)
+        query = nn.functional.interpolate(query,[self.rel_dim ,1]).squeeze()
+        key = nn.functional.interpolate(key,[self.rel_dim ,1]).squeeze()
+        value = nn.functional.interpolate(value,[self.rel_dim ,1]).squeeze()
+        fs_reprojection, _ = self.embedding(query, key, value)
+        return fs_reprojection
+
 

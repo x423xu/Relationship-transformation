@@ -5,6 +5,7 @@ import torch
 import os
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 import h5py
+from collections import defaultdict
 
 '''
 Dataset for RealEstate10K relationships
@@ -36,6 +37,7 @@ class RealEstate10KRelationships(data.Dataset):
             ],
             dtype=np.float32,
         )
+        self.invK = np.linalg.inv(self.K)
 
     def _remove_non_exist(self, pairs):
         new_train_val_test_pairs = {}
@@ -58,21 +60,32 @@ class RealEstate10KRelationships(data.Dataset):
     def load_img(self, seq_name, timestamp):
         png_name = os.path.join(self.args.frames_dir, self.mode, seq_name, timestamp+'.png')
         img = Image.open(png_name)
+        shape = [img.width, img.height]
+        img = img.resize([self.args.W, self.args.W])
         img = self.transform(img)
-        return img
+        return img, shape
     
-    def load_rel(self,seq_name, timestamp):
+    def load_rel(self,seq_name, timestamp, img_shape):
         rel_name = os.path.join(self.args.frames_dir, self.mode, seq_name, timestamp+'.h5')
+        if not os.path.exists(rel_name):
+            raise 'no such file'
         with h5py.File(rel_name, 'r') as f:
             rel_features = np.array(f["rel_features"])
             bbox = np.array(f["bbox"])
             idx_pairs = np.array(f["idx_pairs"])
             labels = np.array(f["labels"])
+        if labels.shape[0]>100:
+            raise '> 100'
+        labels_100 = np.zeros([100, ])
+        labels_100[:labels.shape[0]] = labels
+
+        bbox_scales = np.array([1/img_shape[0], 1/img_shape[1]]).repeat(4)
+        scaled_bbox = bbox*bbox_scales[np.newaxis, :]
         return {
             'rel_features':rel_features,
-            'bbox': bbox,
+            'bbox': scaled_bbox,
             'idx_pairs': idx_pairs,
-            'labels': labels
+            'labels': labels_100
         }
     
     '''
@@ -109,18 +122,16 @@ class RealEstate10KRelationships(data.Dataset):
         seq_name = camera_txt.rstrip('.txt')
         [t1, t2] = pair[1].split()
         
-        img1 = self.load_img(seq_name, t1)
-        img2 = self.load_img(seq_name, t2)
+        img1, s1 = self.load_img(seq_name, t1)
+        img2, s2 = self.load_img(seq_name, t2)
         # R1, bbox1 = self.get_rel(seq_name, t1)
         # R2, bbox2 = self.get_rel(seq_name, t2)
         K, P1 = self.get_camera_params(camera_txt, t1)
-        _, P2 = self.get_camera_params(camera_txt, t2)
-        # R1 = torch.zeros([1, 6032, 128])
-        # B1 = torch.zeros([1, 6032, 8])
-        # R2 = torch.zeros([1, 6032, 128])
-        # B2 = torch.zeros([1, 6032, 8])
-        R1 = self.load_rel(seq_name, t1)
-        R2 = self.load_rel(seq_name, t2)
+        _, P2 = self.get_camera_params(camera_txt, t2,)
+        origP1 = P1.copy()
+        origP2 = P2.copy()
+        R1 = self.load_rel(seq_name, t1, s1)
+        R2 = self.load_rel(seq_name, t2, s2)
 
         #modify to be compatible with habitat
         K = np.matmul(self.offset, K)
@@ -137,13 +148,22 @@ class RealEstate10KRelationships(data.Dataset):
         P2[3, 3] = 1
         P1inv = np.linalg.inv(P1)
         P2inv = np.linalg.inv(P2)
-        return {
+
+        results = {}
+        results.update({
             'images': [img1, img2],
             'K': self.K,
+            "Kinv": self.invK,
             'P': [P1, P2],
-            'Pinv': [P1inv, P2inv],
-            'R': [R1, R2],
-        }
+            'Pinv': [P1inv, P2inv],  
+            'OrigP':[origP1, origP2],
+            "rel_features":[R1['rel_features'], R2['rel_features']],
+            'bbox': [R1['bbox'], R2['bbox']],
+            'idx_pairs': [R1['idx_pairs'], R2['idx_pairs']],
+            'labels': [R1['labels'], R2['labels']]
+           
+        })
+        return results
     
     def __len__(self):
         return len(self.train_val_test_pairs[self.mode])

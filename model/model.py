@@ -5,25 +5,7 @@ import pytorch_lightning as pl
 import torch.nn as nn
 
 from metrics import make_metrics
-from .networks.z_buffermodel import ZbufferModelPts
-
-
-class RelTrans(nn.Module):
-
-
-    def __init__(
-        self,args
-    ):
-
-        super().__init__()
-        self.args = args
-        self.model = ZbufferModelPts(args)
-
-    def forward(self, R: torch.Tensor, B: torch.Tensor) -> Union[torch.Tensor, Dict]:
-
-        Ro, Bo,  = self.model(R, B)
-
-        return Ro,Bo
+from .RelTrans import RelTrans
 
 
 """
@@ -60,28 +42,27 @@ class PLPredictionModule(pl.LightningModule):
         K = batch['K']
         [P1, P2] = batch['P']
         [Pinv1, Pinv2] = batch['Pinv']
-        [R1, R2] = batch['R']
-        [B1, B2] = batch['B']
-        R_tilde, B_tilde = self.model(R1, B1)
+        [R1, R2] = batch['rel_features']
+        [B1, B2] = batch['bbox']
+        R_tilde, pts3d = self.model(batch)
         rel_loss = self.losses(R_tilde, R2)
-        box_loss = self.losses(B_tilde, B2)
-        loss = rel_loss+box_loss
+        # box_loss = self.losses(B_tilde, B2)
+        loss = rel_loss
         self.log("train_loss", loss, on_step=True)
         return loss
 
 
     def validation_step(self, batch, batch_idx):
-
         [target_imgs,ref_imgs] = batch['images']
         K = batch['K']
         [P1, P2] = batch['P']
         [Pinv1, Pinv2] = batch['Pinv']
-        [R1, R2] = batch['R']
-        [B1, B2] = batch['B']
-        R_tilde, B_tilde = self.model(R1, B1)
+        [R1, R2] = batch['rel_features']
+        [B1, B2] = batch['bbox']
+        R_tilde, pts3d = self.model(batch)
         rel_loss = self.losses(R_tilde, R2)
-        box_loss = self.losses(B_tilde, B2)
-        loss = rel_loss+box_loss
+        # box_loss = self.losses(B_tilde, B2)
+        loss = rel_loss
         self.log(self.args.monitor, loss, on_step=False, on_epoch=True)
         return loss
 

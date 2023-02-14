@@ -1,4 +1,11 @@
+# folders
 .vscode/
+experiments/
+__pycache__
+lightning_logs
+synsin/
+
+# files
 *.tmp
 *.txt
 *.npy
@@ -6,8 +13,6 @@
 *.jpg
 *.npz
 *.npy
-experiments/
-__pycache__
-lightning_logs
 *.pth
 *.pt
+lib/synsin

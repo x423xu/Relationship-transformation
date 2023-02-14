@@ -1,8 +1,15 @@
+'''
+use synsin model
+'''
+import sys
+sys.path.append('lib/synsin')
+
 from configs import args
 import pytorch_lightning as pl
 from data import make_data
 from model import make_model
 from utils.pl_config import set_arguments_pl
+
 
 '''
 

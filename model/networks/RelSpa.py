@@ -1,6 +1,6 @@
-'''
+"""
 Relationship Spatialization
-'''
+"""
 
 import torch
 import torch.nn as nn
@@ -10,7 +10,7 @@ import numpy as np
 class RSModel(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-    
+
     def interpolate(
         self, rel_features, bbox, size
     ):  # (b,128,1024,1)->(b, 128, 240, 320),bbox(b,256,8)
@@ -47,22 +47,22 @@ class RSModel(nn.Module):
 
 
 class Reprojector(nn.Module):
-    def __init__(self, rel_dim = 51) -> None:
+    def __init__(self, rel_dim=51) -> None:
         super().__init__()
         self.rel_dim = rel_dim
         self.embedding = nn.MultiheadAttention(rel_dim, 1)
-        self.query_embedding = nn.Conv2d(256,256,3,1,1)
-        self.key_embedding = nn.Conv2d(256,256,3,1,1)
-        self.value_embedding = nn.Conv2d(256,256,3,1,1)
+        self.query_embedding = nn.Conv2d(256, 256, 3, 1, 1)
+        self.key_embedding = nn.Conv2d(256, 256, 3, 1, 1)
+        self.value_embedding = nn.Conv2d(256, 256, 3, 1, 1)
+        self.act = nn.Softmax(dim=-1)
 
     def forward(self, fs):
         query = self.query_embedding(fs)
         key = self.key_embedding(fs)
         value = self.value_embedding(fs)
-        query = nn.functional.interpolate(query,[self.rel_dim ,1]).squeeze()
-        key = nn.functional.interpolate(key,[self.rel_dim ,1]).squeeze()
-        value = nn.functional.interpolate(value,[self.rel_dim ,1]).squeeze()
+        query = nn.functional.interpolate(query, [self.rel_dim, 1]).squeeze()
+        key = nn.functional.interpolate(key, [self.rel_dim, 1]).squeeze()
+        value = nn.functional.interpolate(value, [self.rel_dim, 1]).squeeze()
         fs_reprojection, _ = self.embedding(query, key, value)
+        fs_reprojection = self.act(fs_reprojection)
         return fs_reprojection
-
-

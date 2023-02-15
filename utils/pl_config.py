@@ -30,22 +30,22 @@ def get_profiler(args):
 def set_arguments_pl(args):
     pl_args = {}
     accelerator_cfg = get_accelerator_cfg(args)
-    # logger = get_logger(args)
+    logger = get_logger(args)
     ckpt_callback = get_checkpoint(args)
     profiler = get_profiler(args)
     train_val_cfg = get_train_val_cfg(args)
     # test_cfg = get_test_cfg(args)
     resume_cfg = get_resume_cfg(args)
 
-    # pl_args.update(
-    #     **accelerator_cfg,
-    #     **logger,
-    #     **ckpt_callback,
-    #     **profiler,
-    #     **train_val_cfg,
-    #     **resume_cfg
-    # )
-    pl_args.update(**accelerator_cfg, **train_val_cfg)
+    pl_args.update(
+        **accelerator_cfg,
+        **logger,
+        **ckpt_callback,
+        **profiler,
+        **train_val_cfg,
+        **resume_cfg
+    )
+    # pl_args.update(**accelerator_cfg, **train_val_cfg)
     return pl_args
 
 

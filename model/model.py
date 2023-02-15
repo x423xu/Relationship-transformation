@@ -19,8 +19,7 @@ class PLPredictionModule(pl.LightningModule):
         self.save_hyperparameters()
         self.args = args
         self.model = RelTrans(args)
-        self.losses = make_losses(args)
-        self.loss_weights = args.losses_weights
+        self.losses, self.loss_weights = make_losses(args)
         # self.losses = nn.MSELoss()
 
     def configure_optimizers(self):
@@ -41,20 +40,22 @@ class PLPredictionModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         R_tilde, pts3d = self.model(batch)
-        mask  =self._get_correpondence(pts3d, batch)
+        mask = self._get_correpondence(pts3d, batch)
         loss = self.comput_loss(R_tilde, mask, batch)
-        self.log("train_loss", loss, on_step=True, rank_zero_only = True)
+        self.log("train_loss", loss, on_step=True, rank_zero_only=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
 
         R_tilde, pts3d = self.model(batch)
-        mask  =self._get_correpondence(pts3d, batch)
+        mask = self._get_correpondence(pts3d, batch)
         loss = self.comput_loss(R_tilde, mask, batch)
         val_metrics = make_metrics(self.args)
-        values = self.compute_metrics(val_metrics, R_tilde, batch['rel_features'][1], mask)
-        self.log(self.args.monitor, loss, on_step=True, rank_zero_only = True)
-        self.log('val_metrics', values, on_step=True, rank_zero_only = True)
+        values = self.compute_metrics(
+            val_metrics, R_tilde, batch["rel_features"][1], mask
+        )
+        self.log(self.args.monitor, loss, on_step=False, on_epoch=True, rank_zero_only=True)
+        self.log("val_metrics", values, on_step=True, on_epoch=True, rank_zero_only=True)
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -72,12 +73,12 @@ class PLPredictionModule(pl.LightningModule):
 
     def compute_metrics(self, metrics, prediction, groundtruth, mask):
         values = {}
-        for k,m in metrics.items():
+        for k, m in metrics.items():
             value = m.compute(prediction, groundtruth, mask)
-            values.update({k:value})
+            values.update({k: value})
         return values
-    
-    def _get_correpondence(self,pts3D_orig, batch):
+
+    def _get_correpondence(self, pts3D_orig, batch):
         def _bbox_map(bbox, pts3D, W):
             pts3D = pts3D.clone().detach()
             bbox = bbox.clone().detach()

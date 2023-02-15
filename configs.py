@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--project_name', default='Relationship transformation', type=str)
 parser.add_argument('--mode', default='train', type=str, choices=['train', 'test'])
 parser.add_argument('--algorithm', default='direct_map', type=str, 
-                    choices=['direct_map', 'map_with_distribution', 'map_with_projection'], 
+                    choices=['direct_map', 'map_with_graph'], 
                     help = '')
 
 '''
@@ -49,7 +49,8 @@ args for model
 args for metrics
 '''
 parser.add_argument('--losses', default=['structure_loss', 'value_loss'], nargs='+')
-parser.add_argument('--losses_weights', default=[0.1, 1], nargs='+')
+parser.add_argument('--losses_weights', default=[1, 1], nargs='+')
+parser.add_argument('--simple_loss', default=True, type = bool)
 parser.add_argument('--K', default=[5, 10,20], type = int, nargs='+', help='reall @ k')
 '''
 args for logger

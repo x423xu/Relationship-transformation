@@ -87,6 +87,8 @@ class RealEstate10KRelationships(data.Dataset):
             ]
         )
         labels_100[: labels.shape[0]] = labels
+        # new_idx_pairs = np.zeros([256, idx_pairs.shape[1]])
+        # new_idx_pairs[: idx_pairs.shape[0], :] = idx_pairs
 
         bbox[:, ::2] = bbox[:, ::2] / img_shape[0]
         bbox[:, 1::2] = bbox[:, 1::2] / img_shape[1]

@@ -21,16 +21,30 @@ class Hook:
 
 
 class NewZbufferModelPts(ZbufferModelPts):
-    def __init__(self, opt):
+    def __init__(self, opt, model_path):
         super().__init__(opt)
         self.hook = Hook()
         """
         freeze unused parts
         """
+        self._load_pretrain(model_path)
         self._freeze_module(self.encoder)
         self._freeze_module(self.projector)
         self._freeze_module(self.pts_regressor)
 
+    def _load_pretrain(self,model_path):
+        state_dict_new = {}
+        for k,v in torch.load(model_path)["state_dict"].items():
+            if 'model.module' in k:
+                k = k.replace('model.module.','')
+            if k not in self.state_dict().keys():
+                continue
+            state_dict_new[k] = v
+        if len(state_dict_new.keys()) != len(self.state_dict().keys()):
+            raise 'keys error'
+        self.load_state_dict(state_dict_new)
+        print('load from synsin')
+        
     def _freeze_module(self, module):
         for p in module.parameters():
             p.requires_grad = False
@@ -82,7 +96,7 @@ class RelTrans(nn.Module):
         """
         MODEL_PATH = "lib/synsin/modelcheckpoints/realestate/zbufferpts.pth"
         opts = torch.load(MODEL_PATH)["opts"]
-        self.z_buffer = NewZbufferModelPts(opts)
+        self.z_buffer = NewZbufferModelPts(opts, model_path = MODEL_PATH)
 
         """
         reprojector

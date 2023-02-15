@@ -49,8 +49,10 @@ args for model
 '''
 args for metrics
 '''
-parser.add_argument('--losses', default=['structure_loss', 'value_loss'], nargs='+')
-parser.add_argument('--losses_weights', default=[1, 1], nargs='+')
+# parser.add_argument('--losses', default=['structure_loss', 'value_loss'], nargs='+')
+# parser.add_argument('--losses_weights', default=[1, 1], nargs='+')
+parser.add_argument('--losses', default=['value_loss'], nargs='+')
+parser.add_argument('--losses_weights', default=[1], nargs='+')
 parser.add_argument('--simple_loss', default=False, type = bool)
 parser.add_argument('--K', default=[5, 10,20], type = int, nargs='+', help='reall @ k')
 '''

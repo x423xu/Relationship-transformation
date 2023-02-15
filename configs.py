@@ -18,6 +18,7 @@ parser.add_argument('--dataset', default='real_estate', type=str)
 parser.add_argument('--cameras_dir', default='/home/xxy/Documents/data/RealEstate10K', type=str)
 parser.add_argument('--frames_dir', default='/home/xxy/Documents/data/RealEstate10K/benchmark_frames', type=str)
 parser.add_argument('--W', default=256, type=int, help='width of input image')
+parser.add_argument('--pre_factor', default=8, type=int, help='prefactor for dataloader')
 parser.add_argument('--num_workers', default=10, type=int, help='number of workers')
 
 '''

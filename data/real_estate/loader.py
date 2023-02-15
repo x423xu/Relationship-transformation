@@ -26,7 +26,7 @@ class RealEstateRelationshipDataModule(pl.LightningDataModule):
             batch_size=self.args.train_size,
             shuffle=True,
             pin_memory=True,
-            # prefetch_factor = 10,
+            prefetch_factor = self.args.pre_factor,
         )
 
     def val_dataloader(self):
@@ -36,7 +36,7 @@ class RealEstateRelationshipDataModule(pl.LightningDataModule):
             batch_size=self.args.val_size,
             shuffle=False,
             pin_memory=True,
-            # prefetch_factor = 10,
+            prefetch_factor = self.args.pre_factor,
         )
 
     def test_dataloader(self):

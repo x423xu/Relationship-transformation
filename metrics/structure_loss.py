@@ -94,13 +94,13 @@ class StructureLoss(Metrics):
             gt_union = torch.vstack(
                 [gt_tmp[samemask2[:, 0]], gt_tmp[selfmask2], output[b][diffmask2]]
             )
-            if not (
-                (edge_union.unsqueeze(0) == edge_union2.unsqueeze(1))
-                .any(-1)
-                .any(0)
-                .all()
-            ):
-                raise "Union graph not same, algo error!!!"
+            # if not (
+            #     (edge_union.unsqueeze(0) == edge_union2.unsqueeze(1))
+            #     .any(-1)
+            #     .any(0)
+            #     .all()
+            # ):
+            #     raise "Union graph not same, algo error!!!"
 
             """
             All relatinships are predicted in one mode

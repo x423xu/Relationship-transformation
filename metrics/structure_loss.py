@@ -84,13 +84,20 @@ class StructureLoss(Metrics):
             edge_union, samemask, selfmask, diffmask = get_union(
                 idx_pairs1_tmp, idx_pairs2_tmp
             )
+            """
+            All relatinships are predicted in one mode
+            """
+            if edge_union.shape[0] > 2000:
+                continue
             pred_union = torch.vstack(
                 [output[b][samemask[:, 0]], output[b][selfmask], gt_tmp[diffmask]]
             )
-
+            
             edge_union2, samemask2, selfmask2, diffmask2 = get_union(
                 idx_pairs2_tmp, idx_pairs1_tmp
             )
+            if edge_union2.shape[0] > 2000:
+                continue
             gt_union = torch.vstack(
                 [gt_tmp[samemask2[:, 0]], gt_tmp[selfmask2], output[b][diffmask2]]
             )
@@ -102,11 +109,7 @@ class StructureLoss(Metrics):
             # ):
             #     raise "Union graph not same, algo error!!!"
 
-            """
-            All relatinships are predicted in one mode
-            """
-            if edge_union.shape[0] > 1000:
-                continue
+            
             # print(edge_union.shape, edge_union2.shape)
             loss += get_distribution_loss(
                 nodes, edge_union, edge_union2, pred_union, gt_union

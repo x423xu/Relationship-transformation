@@ -25,8 +25,8 @@ parser.add_argument('--num_workers', default=10, type=int, help='number of worke
 args for train
 '''
 parser.add_argument('--epoch', default=100, type=int)
-parser.add_argument('--train_size', default=12, type=int)
-parser.add_argument('--val_size', default=12, type=int)
+parser.add_argument('--train_size', default=8, type=int)
+parser.add_argument('--val_size', default=8, type=int)
 parser.add_argument('--scheduler_step', default=1000, type=int)
 parser.add_argument('--scheduler_frequency', default=1, type=int)
 parser.add_argument('--log_steps', default=5, type=int)

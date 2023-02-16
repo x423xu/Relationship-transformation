@@ -26,7 +26,7 @@ class RealEstate10KRelationships(data.Dataset):
         )
         pairs = np.load(args.train_val_test_dir, allow_pickle=True).item()
         self.train_val_test_pairs = self._remove_non_exist(pairs)
-        # l = [1000, 500, 200]
+        # l = [2500, 1500, 200]
         # for n, (k,v) in enumerate(self.train_val_test_pairs.items()):
         #     self.train_val_test_pairs.update({k: v[:l[n]]})
         self.offset = np.array(

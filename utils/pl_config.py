@@ -108,7 +108,7 @@ configurations for logger
 def get_logger_cfg(args):
     cfg = {}
     if not os.path.exists(args.log_dir):
-        os.makedirs(args.log_dir)
+        os.makedirs(args.log_dir, exist_ok=True)
     cfg.update(
         {
             "save_dir": args.log_dir,
@@ -128,7 +128,7 @@ configurations for checkpoint
 def get_checkpoint_cfg(args):
     cfg = {}
     if not os.path.exists(os.path.join(args.checkpoint_dir, name)):
-        os.makedirs(os.path.join(args.checkpoint_dir, name))
+        os.makedirs(os.path.join(args.checkpoint_dir, name), exist_ok=True)
 
     cfg.update(
         {
@@ -150,7 +150,7 @@ configurations for profiler
 def get_profiler_cfg(args):
     cfg = {}
     if not os.path.exists(args.profiler_path):
-        os.makedirs(args.profiler_path)
+        os.makedirs(args.profiler_path, exist_ok=True)
     cfg.update({"dirpath": args.profiler_path, "filename": args.profiler_name})
     return cfg
 

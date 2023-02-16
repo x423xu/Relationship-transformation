@@ -25,10 +25,10 @@ parser.add_argument('--num_workers', default=10, type=int, help='number of worke
 args for train
 '''
 parser.add_argument('--epoch', default=100, type=int)
-parser.add_argument('--train_size', default=4, type=int)
-parser.add_argument('--val_size', default=4, type=int)
-parser.add_argument('--scheduler_step', default=500, type=int)
-parser.add_argument('--scheduler_frequency', default=100, type=int)
+parser.add_argument('--train_size', default=12, type=int)
+parser.add_argument('--val_size', default=12, type=int)
+parser.add_argument('--scheduler_step', default=1000, type=int)
+parser.add_argument('--scheduler_frequency', default=1, type=int)
 parser.add_argument('--log_steps', default=5, type=int)
 parser.add_argument('--val_check_interval', default=0.25, type=float)
 parser.add_argument('--scheduler_gamma', default=0.5, type=float)
@@ -49,10 +49,10 @@ args for model
 '''
 args for metrics
 '''
-# parser.add_argument('--losses', default=['structure_loss', 'value_loss'], nargs='+')
-# parser.add_argument('--losses_weights', default=[1, 1], nargs='+')
-parser.add_argument('--losses', default=['value_loss'], nargs='+')
-parser.add_argument('--losses_weights', default=[1], nargs='+')
+parser.add_argument('--losses', default=['structure_loss', 'value_loss'], nargs='+')
+parser.add_argument('--losses_weights', default=[1, 1], nargs='+')
+# parser.add_argument('--losses', default=['value_loss'], nargs='+')
+# parser.add_argument('--losses_weights', default=[1], nargs='+')
 parser.add_argument('--simple_loss', default=False, type = bool)
 parser.add_argument('--K', default=[5, 10,20], type = int, nargs='+', help='reall @ k')
 '''
@@ -69,7 +69,6 @@ parser.add_argument('--checkpoint_dir', default='./experiments/checkpoints', typ
 parser.add_argument('--save_top_k', default=5, type=int)
 parser.add_argument('--monitor', default='val_loss', type=str)
 parser.add_argument('--monitor_mode', default='min', type=str)
-# parser.add_argument('--checkpoint_filename', default="drs-{epoch:02d}-{val_loss:.2f}", type=str)
 parser.add_argument('--resume_dir', default='experiments/checkpoints/Relationship transformation-epoch=00-val_loss=0.00.ckpt', type=str)
 parser.add_argument('--resume', default=False, type=bool)
 '''

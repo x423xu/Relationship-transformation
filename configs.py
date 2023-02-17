@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser(
     description='Project for ICCV 2023 xxx',
 )
 parser.add_argument('--project_name', default='Relationship transformation', type=str)
-parser.add_argument('--mode', default='train', type=str, choices=['train', 'test'])
+parser.add_argument('--mode', default='test', type=str, choices=['train', 'test'])
 parser.add_argument('--algorithm', default='direct_map', type=str, 
                     choices=['direct_map', 'map_with_graph'], 
                     help = '')
@@ -40,7 +40,8 @@ parser.add_argument('--accelerator', default='gpu', type=str, choices=['gpu', 'd
 '''
 args for test
 '''
-parser.add_argument('--test_size', default=100, type=int)
+parser.add_argument('--test_size', default=8, type=int)
+parser.add_argument('--test_model_dir', default='./experiments/checkpoints/02152023_22:20:20/Relationship transformation-epoch=11-val_loss=0.03-v1.ckpt', type=str)
 
 '''
 args for model

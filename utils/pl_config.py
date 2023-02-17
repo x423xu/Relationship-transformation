@@ -9,22 +9,31 @@ name = now.strftime("%m%d%Y_%H:%M:%S")
 
 
 def get_logger(args):
-    logger_cfg = get_logger_cfg(args)
-    logger_cfg.update({"name": name})
-    logger = WandbLogger(**logger_cfg)
-    return {"logger": logger}
+    if args.mode =='train':
+        logger_cfg = get_logger_cfg(args)
+        logger_cfg.update({"name": name})
+        logger = WandbLogger(**logger_cfg)
+        return {"logger": logger}
+    else:
+        return {}
 
 
 def get_checkpoint(args):
-    ckpt_cfg = get_checkpoint_cfg(args)
-    checkpoint_callback = ModelCheckpoint(**ckpt_cfg)
-    return {"callbacks": [checkpoint_callback]}
+    if args.mode == 'train':
+        ckpt_cfg = get_checkpoint_cfg(args)
+        checkpoint_callback = ModelCheckpoint(**ckpt_cfg)
+        return {"callbacks": [checkpoint_callback]}
+    if args.mode == 'test':
+        return {}
 
 
 def get_profiler(args):
-    profiler_cfg = get_profiler_cfg(args)
-    profiler = SimpleProfiler(**profiler_cfg)
-    return {"profiler": profiler}
+    if args.mode == 'train':
+        profiler_cfg = get_profiler_cfg(args)
+        profiler = SimpleProfiler(**profiler_cfg)
+        return {"profiler": profiler}
+    if args.mode == 'test':
+        return {}
 
 
 def set_arguments_pl(args):
@@ -34,7 +43,6 @@ def set_arguments_pl(args):
     ckpt_callback = get_checkpoint(args)
     profiler = get_profiler(args)
     train_val_cfg = get_train_val_cfg(args)
-    # test_cfg = get_test_cfg(args)
     resume_cfg = get_resume_cfg(args)
 
     pl_args.update(
@@ -43,7 +51,7 @@ def set_arguments_pl(args):
         **ckpt_callback,
         **profiler,
         **train_val_cfg,
-        **resume_cfg
+        **resume_cfg,
     )
     # pl_args.update(**accelerator_cfg, **train_val_cfg)
     return pl_args
@@ -81,23 +89,16 @@ configurations for train validation
 
 def get_train_val_cfg(args):
     cfg = {}
-    cfg.update(
-        {
-            "max_epochs": args.epoch,
-            "log_every_n_steps": args.log_steps,
-            "val_check_interval": args.val_check_interval,
-        }
-    )
+    if args.mode == 'train':
+        cfg.update(
+            {
+                "max_epochs": args.epoch,
+                "log_every_n_steps": args.log_steps,
+                "val_check_interval": args.val_check_interval,
+            }
+        )
     return cfg
 
-
-"""
-configurations for test
-"""
-
-
-def get_test_cfg(args):
-    return {}
 
 
 """
@@ -162,6 +163,7 @@ configurations for resume training
 
 def get_resume_cfg(args):
     cfg = {}
-    if args.resume:
-        cfg.update({"ckpt_path": args.resume_dir})
+    if args.mode == 'train':
+        if args.resume:
+            cfg.update({"resume_from_checkpoint": args.resume_dir})
     return cfg

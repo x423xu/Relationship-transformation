@@ -3,6 +3,7 @@ import torch
 from typing import Dict, Union
 import pytorch_lightning as pl
 import torch.nn as nn
+import numpy as np
 
 from metrics import make_losses, make_metrics
 from .RelTrans import RelTrans
@@ -44,6 +45,24 @@ class PLPredictionModule(pl.LightningModule):
         loss = self.comput_loss(R_tilde, mask, batch)
         self.log("train_loss", loss, on_step=True, rank_zero_only=True)
         return loss
+    
+    def test_epoch_end(self, outputs):
+        results = {}
+        for o in outputs:
+            for k, v in o.items():
+                if not isinstance(v, torch.Tensor):
+                    v = torch.tensor(v)
+                else:
+                    v = v.cpu()
+                if k not in results.keys():
+                    results[k]=[v]
+                else:
+                    results[k].append(v)
+        for k,v in results.items():
+            results.update({k:torch.vstack(v).mean()})
+        self.log('test_metrics', results)
+    def predict_step(self, batch, batch_idx):
+        print('ok')
 
     def validation_step(self, batch, batch_idx):
 
@@ -59,7 +78,14 @@ class PLPredictionModule(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        return 0
+        R_tilde, pts3d = self.model(batch)
+        mask = self._get_correpondence(pts3d, batch)
+        val_metrics = make_metrics(self.args)
+        values = self.compute_metrics(
+            val_metrics, R_tilde, batch["rel_features"][1], mask
+        )
+        self.log("test_metrics", values)
+        return values
 
     """
     compute loss and add them together

@@ -24,8 +24,12 @@ class RealEstate10KRelationships(data.Dataset):
                 Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ]
         )
-        pairs = np.load(args.train_val_test_dir, allow_pickle=True).item()
-        self.train_val_test_pairs = self._remove_non_exist(pairs)
+        if not os.path.exists('{}_exist.npy'.format(args.train_val_test_dir.rstrip('.npy'))):
+            pairs = np.load(args.train_val_test_dir, allow_pickle=True).item()
+            self.train_val_test_pairs = self._remove_non_exist(pairs)
+            np.save('{}_exist.npy'.format(args.train_val_test_dir.rstrip('.npy')), self.train_val_test_pairs, allow_pickle=True)
+        else:
+            self.train_val_test_pairs = np.load('{}_exist.npy'.format(args.train_val_test_dir.rstrip('.npy')), allow_pickle=True).item()
         # l = [2500, 1500, 200]
         # for n, (k,v) in enumerate(self.train_val_test_pairs.items()):
         #     self.train_val_test_pairs.update({k: v[:l[n]]})

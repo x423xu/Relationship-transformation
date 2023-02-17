@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser(
     description='Project for ICCV 2023 xxx',
 )
 parser.add_argument('--project_name', default='Relationship transformation', type=str)
-parser.add_argument('--mode', default='test', type=str, choices=['train', 'test'])
+parser.add_argument('--mode', default='train', type=str, choices=['train', 'test'])
 parser.add_argument('--algorithm', default='direct_map', type=str, 
                     choices=['direct_map', 'map_with_graph'], 
                     help = '')

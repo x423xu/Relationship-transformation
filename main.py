@@ -20,9 +20,9 @@ def set_limited_train_val(args):
     if args.mode == 'train':
         if args.accelerator == 'ddp':
             if args.train_size ==8 and args.val_size==8:
-                d.update({'limit_val_batches':116})
+                d.update({'limit_val_batches':100})
             if args.train_size ==4 and args.val_size==4:
-                d.update({'limit_val_batches':232})
+                d.update({'limit_val_batches':200})
     return d
 def main():
     dataloader = make_data(args)

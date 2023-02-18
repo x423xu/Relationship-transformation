@@ -25,6 +25,7 @@ class RealEstateRelationshipDataModule(pl.LightningDataModule):
             num_workers=self.args.num_workers,
             batch_size=self.args.train_size,
             shuffle=True,
+            drop_last=True,
             pin_memory=True,
             prefetch_factor = self.args.pre_factor,
         )
@@ -36,6 +37,7 @@ class RealEstateRelationshipDataModule(pl.LightningDataModule):
             batch_size=self.args.val_size,
             shuffle=False,
             pin_memory=True,
+            drop_last=True,
             prefetch_factor = self.args.pre_factor,
         )
 

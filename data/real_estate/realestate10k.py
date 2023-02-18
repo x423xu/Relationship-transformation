@@ -14,16 +14,17 @@ return: image, relationships, bounding boxes, Intrinsic params, camera pose
 
 
 class RealEstate10KRelationships(data.Dataset):
-    def __init__(self, mode, args) -> None:
-        self.args = args
-        self.mode = mode
-        self.transform = Compose(
+    transform = Compose(
             [
                 Resize((args.W, args.W)),
                 ToTensor(),
                 Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ]
         )
+    def __init__(self, mode, args) -> None:
+        self.args = args
+        self.mode = mode
+        
         if not os.path.exists('{}_exist.npy'.format(args.train_val_test_dir.rstrip('.npy'))):
             pairs = np.load(args.train_val_test_dir, allow_pickle=True).item()
             self.train_val_test_pairs = self._remove_non_exist(pairs)

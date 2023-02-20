@@ -15,6 +15,7 @@ import h5py
 from PIL import Image
 from tqdm import tqdm
 import quaternion
+import cv2
 
 
 def load_rel(img_name):
@@ -115,6 +116,27 @@ def get_batch_imgs(img, transform, device="cuda"):
     )
     return batch
 
+'''
+get new bbox from pts3d
+'''
+def generate_new_bbox(il, bbox, pts3d, argsW):
+    import matplotlib.pyplot as plt
+    img = Image.open(il)
+    w,h = img.size
+    bbox[0, :, ::2] *= w
+    bbox[0, :, 1::2] *= h
+    bbox = bbox[0, :5, :].int().cpu().numpy()
+    img = np.array(img)
+    for box in bbox:
+        sub_box = box[:4]
+        obj_box = box[4:]
+        img = cv2.rectangle(img, sub_box[:2], sub_box[2:], color = [255,0,0])
+        img = cv2.rectangle(img, obj_box[:2], obj_box[2:], color = [255,0,0])
+        img = cv2.line(img, (sub_box[2], sub_box[3]), (obj_box[2], obj_box[3]), color=[0,0,255])
+    plt.imshow(img)
+    plt.show()
+
+
 
 def get_rel_transformed_from_list(img_list, W=256):
     args.mode = "test"
@@ -129,10 +151,12 @@ def get_rel_transformed_from_list(img_list, W=256):
     )
     with torch.no_grad():
         for il in tqdm(img_list):
-            if os.path.exists(il.replace(".png", "_trans.h5")):
-                continue
+            # if os.path.exists(il.replace(".png", "_trans.h5")):
+            #     continue
+            
             batch = get_batch_imgs(il, transform)
             R_tilde, pts3d = trans_model(batch)
+            generate_new_bbox(il, batch['bbox'][0], pts3d, args.W)
             rel_features = R_tilde.cpu().numpy()
             bbox = batch["bbox"][0].cpu().numpy()
             rel_name = il.replace(".png", "_trans.h5")

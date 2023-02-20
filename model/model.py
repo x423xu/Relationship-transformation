@@ -65,7 +65,6 @@ class PLPredictionModule(pl.LightningModule):
         print('ok')
 
     def validation_step(self, batch, batch_idx):
-
         R_tilde, pts3d = self.model(batch)
         mask = self._get_correpondence(pts3d, batch)
         loss = self.comput_loss(R_tilde, mask, batch)

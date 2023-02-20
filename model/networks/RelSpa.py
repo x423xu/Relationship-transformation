@@ -21,9 +21,9 @@ class RSModel(nn.Module):
         )
         # print(rel_features.shape, out.shape, bbox.shape)
         interpolate_ = nn.functional.interpolate
-        [h, w] = size
-        sub_box = bbox[:, :, :4].int() // 2
-        obj_box = bbox[:, :, 4:].int() // 2
+        [w, w] = size
+        sub_box = (bbox[:, :, :4] * w).int() // 2
+        obj_box = (bbox[:, :, 4:] * w).int() // 2
         # sub_box = sub_box.cpu().numpy()
         # obj_box = obj_box.cpu().numpy()
         for i in range(bbox.shape[0]):

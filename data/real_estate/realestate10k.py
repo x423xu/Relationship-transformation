@@ -97,9 +97,18 @@ class RealEstate10KRelationships(data.Dataset):
         labels_100[: labels.shape[0]] = labels
         # new_idx_pairs = np.zeros([256, idx_pairs.shape[1]])
         # new_idx_pairs[: idx_pairs.shape[0], :] = idx_pairs
-
-        bbox[:, ::2] = (bbox[:, ::2] / 640)*self.args.W
-        bbox[:, 1::2] = (bbox[:, 1::2] / 480)*self.args.W
+        w,h = img_shape
+        max_size, min_size = 640, 480
+        if w/h > max_size/min_size:
+            ratio = 640/w
+            nw = 640
+            nh = ratio*h
+        else:
+            ratio = 480/h
+            nw = w*ratio
+            nh = 480
+        bbox[:, ::2] = (bbox[:, ::2] / nw)*self.args.W
+        bbox[:, 1::2] = (bbox[:, 1::2] / nh)*self.args.W
         return {
             "rel_features": rel_features,
             "bbox": bbox,

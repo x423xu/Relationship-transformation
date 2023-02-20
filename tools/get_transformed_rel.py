@@ -38,9 +38,6 @@ def load_rel(img_name):
         ]
     )
     labels_100[: labels.shape[0]] = labels
-
-    # bbox[:, ::2] = bbox[:, ::2] / img_shape[0]
-    # bbox[:, 1::2] = bbox[:, 1::2] / img_shape[1]
     return {
         "rel_features": torch.tensor(rel_features).unsqueeze(0),
         "bbox": torch.tensor(bbox).unsqueeze(0),
@@ -90,8 +87,18 @@ def get_batch_imgs(img, transform, device="cuda"):
     rel_orig = load_rel(img)
     img, shape = load_img(img)
     img = transform(img).unsqueeze(0).cuda()
-    rel_orig["bbox"][:, ::2] = rel_orig["bbox"][:, ::2] / shape[0]
-    rel_orig["bbox"][:, 1::2] = rel_orig["bbox"][:, 1::2] / shape[1]
+    w,h = shape
+    max_size, min_size = 640, 480
+    if w/h > max_size/min_size:
+        ratio = 640/w
+        nw = 640
+        nh = ratio*h
+    else:
+        ratio = 480/h
+        nw = w*ratio
+        nh = 480
+    rel_orig["bbox"][0, :, ::2] = rel_orig["bbox"][0, :, ::2] / nw
+    rel_orig["bbox"][0, :, 1::2] = rel_orig["bbox"][0, :, 1::2] / nh
     """
     camera pose
     """
@@ -119,22 +126,56 @@ def get_batch_imgs(img, transform, device="cuda"):
 '''
 get new bbox from pts3d
 '''
-def generate_new_bbox(il, bbox, pts3d, argsW):
+def generate_new_bbox(il, bbox, pts3D, argsW):
     import matplotlib.pyplot as plt
     img = Image.open(il)
     w,h = img.size
-    bbox[0, :, ::2] *= w
-    bbox[0, :, 1::2] *= h
-    bbox = bbox[0, :5, :].int().cpu().numpy()
-    img = np.array(img)
-    for box in bbox:
-        sub_box = box[:4]
-        obj_box = box[4:]
-        img = cv2.rectangle(img, sub_box[:2], sub_box[2:], color = [255,0,0])
-        img = cv2.rectangle(img, obj_box[:2], obj_box[2:], color = [255,0,0])
-        img = cv2.line(img, (sub_box[2], sub_box[3]), (obj_box[2], obj_box[3]), color=[0,0,255])
-    plt.imshow(img)
-    plt.show()
+    bbox[0, :, ::2] *= (argsW-1)
+    bbox[0, :, 1::2] *= (argsW-1)
+    bbox = bbox[0, :, :].int().cpu().numpy()
+    # img = img.resize([256, 256])
+    # img = np.array(img)
+    # img_cp = img.copy()
+    # for box in bbox:
+    #     sub_box = box[:4]
+    #     obj_box = box[4:]
+    #     img = cv2.rectangle(img, sub_box[:2], sub_box[2:], color = [255,0,0])
+    #     img = cv2.rectangle(img, obj_box[:2], obj_box[2:], color = [255,0,0])
+    #     img = cv2.line(img, (sub_box[2], sub_box[3]), (obj_box[2], obj_box[3]), color=[0,0,255])
+    # plt.figure()
+    # plt.imshow(img)
+
+    pts3D = pts3D.squeeze().detach().cpu().numpy()
+    pts3D[:,1] = (- pts3D[:,1])*(argsW)//2+(argsW)//2
+    pts3D[:,0] = (- pts3D[:,0])*(argsW)//2+(argsW)//2
+    pts3D[pts3D<0] = 0
+    pts3D[pts3D>(argsW-1)] = (argsW-1)
+    pts3D = pts3D.astype(np.int16)
+    new_bbox = []
+    sub_bbox = bbox[:,:4]
+    obj_bbox = bbox[:,4:]
+    for bt in sub_bbox:
+        x1y1 = pts3D[bt[1]*argsW+bt[0], :2]
+        x2y2 = pts3D[bt[3]*argsW+bt[2], :2]
+        new_bbox.append(np.hstack([x1y1,x2y2]))
+    new_sub_bbox = np.vstack(new_bbox)
+    new_bbox = []
+    for bt in obj_bbox:
+        x1y1 = pts3D[bt[1]*argsW+bt[0], :2]
+        x2y2 = pts3D[bt[3]*argsW+bt[2], :2]
+        new_bbox.append(np.hstack([x1y1,x2y2]))
+    new_obj_bbox = np.vstack(new_bbox)
+    trans_bbox = np.hstack([new_sub_bbox, new_obj_bbox])
+    # for box in trans_bbox:
+    #     sub_box = box[:4]
+    #     obj_box = box[4:]
+    #     img = cv2.rectangle(img_cp, sub_box[:2], sub_box[2:], color = [255,0,0])
+    #     img = cv2.rectangle(img, obj_box[:2], obj_box[2:], color = [255,0,0])
+    #     img = cv2.line(img, (sub_box[2], sub_box[3]), (obj_box[2], obj_box[3]), color=[0,0,255])
+    # plt.figure()
+    # plt.imshow(img)
+    # plt.show()
+    return trans_bbox
 
 
 
@@ -156,16 +197,15 @@ def get_rel_transformed_from_list(img_list, W=256):
             
             batch = get_batch_imgs(il, transform)
             R_tilde, pts3d = trans_model(batch)
-            generate_new_bbox(il, batch['bbox'][0], pts3d, args.W)
+            trans_bbox = generate_new_bbox(il, batch['bbox'][0], pts3d, args.W)
             rel_features = R_tilde.cpu().numpy()
-            bbox = batch["bbox"][0].cpu().numpy()
             rel_name = il.replace(".png", "_trans.h5")
             im_rel_h5 = h5py.File(
                 rel_name,
                 "w",
             )
             im_rel_h5.create_dataset("rel_features", data=rel_features)
-            im_rel_h5.create_dataset("bbox", data=bbox)
+            im_rel_h5.create_dataset("bbox", data=trans_bbox)
             im_rel_h5.close()
 
 

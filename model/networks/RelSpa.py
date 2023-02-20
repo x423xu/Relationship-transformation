@@ -14,6 +14,7 @@ class RSModel(nn.Module):
     def interpolate(
         self, rel_features, bbox, size
     ):  # (b,128,1024,1)->(b, 128, 240, 320),bbox(b,256,8)
+        rel_features = rel_features.unsqueeze(-1)
         out = torch.zeros(
             [rel_features.shape[0], rel_features.shape[1], size[0], size[1]],
             dtype=rel_features.dtype,
@@ -32,14 +33,18 @@ class RSModel(nn.Module):
                 sh, sw = sy2 - sy1, sx2 - sx1
                 if sh < 5 or sw < 5:
                     continue
-                sf = interpolate_(rel_features[i, :, :].unsqueeze(0), size=[sh, sw])
+                sf = interpolate_(
+                    rel_features[i, j, :, :].unsqueeze(0).unsqueeze(0), size=[sh, sw]
+                )
                 ox1, oy1, ox2, oy2 = obj_box[i, j, :]
                 oh, ow = oy2 - oy1, ox2 - ox1
                 if oh < 5 or ow < 5:
                     continue
-                of = interpolate_(rel_features[i, :, :].unsqueeze(0), size=[oh, ow])
-                out[i, :, sy1:sy2, sx1:sx2] += sf.squeeze()
-                out[i, :, oy1:oy2, ox1:ox2] += of.squeeze()
+                of = interpolate_(
+                    rel_features[i, j, :, :].unsqueeze(0).unsqueeze(0), size=[oh, ow]
+                )
+                out[i, j, sy1:sy2, sx1:sx2] += sf.squeeze()
+                out[i, j, oy1:oy2, ox1:ox2] += of.squeeze()
         return out
 
     def forward(self, rel_features, bbox, size):

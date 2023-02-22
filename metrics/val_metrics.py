@@ -19,14 +19,17 @@ class RecallK(Metrics):
         for b in range(batch_size):
             y_b = y[mask[:, 0] == b]
             y_t_b = y_tilde[mask[:, 0] == b]
+            
             y_index = torch.argsort(torch.max(y_b, -1)[0], descending=True)
-            y__tilde_index = torch.argsort(y_t_b.max(-1)[0], descending=True)
-            y_class = y_b.argmax(-1)[y_index[: self.K]].detach().cpu().numpy()
-            y_tilde_class = (
-                y_t_b.argmax(-1)[y__tilde_index[: self.K]].detach().cpu().numpy()
-            )
-            intsect = np.intersect1d(y_class, y_tilde_class)
-            recall.append(len(intsect) / self.K)
+            y_tilde_index = torch.argsort(y_t_b.max(-1)[0], descending=True)
+            # y_t_positive = (torch.max(y[y_tilde_index[:self.K],:], -1)[0]>0.5).sum().cpu().numpy()
+            # if y_t_positive<=0:
+            #     continue
+            y_class = y_b.argmax(-1)[y_index[: self.K]]
+            y_tilde_class = y_t_b.argmax(-1)[y_tilde_index[: self.K]]
+            intsect = y_class.unsqueeze(1) == y_tilde_class.unsqueeze(0) 
+            intsect = intsect.any(0).sum().detach().cpu().numpy()
+            recall.append(intsect / self.K)
         recall = np.array(recall).mean()
         return recall
 

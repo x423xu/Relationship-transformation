@@ -42,7 +42,7 @@ parser.add_argument("--val_size", default=8, type=int)
 parser.add_argument("--scheduler_step", default=1000, type=int)
 parser.add_argument("--scheduler_frequency", default=1, type=int)
 parser.add_argument("--log_steps", default=5, type=int)
-parser.add_argument("--val_check_interval", default=0.25, type=float)
+parser.add_argument("--val_check_interval", default=1, type=float)
 parser.add_argument("--scheduler_gamma", default=0.5, type=float)
 parser.add_argument("--lr", "--learning_rate", default=1e-4, type=float)
 parser.add_argument(
@@ -60,7 +60,7 @@ args for test
 parser.add_argument("--test_size", default=8, type=int)
 parser.add_argument(
     "--test_model_dir",
-    default="./experiments/checkpoints/02152023_22:20:20/Relationship transformation-epoch=11-val_loss=0.03-v1.ckpt",
+    default="./experiments/checkpoints/Relationship transformation-epoch=22-val_loss=0.03.ckpt",
     type=str,
 )
 
@@ -71,8 +71,8 @@ args for model
 """
 args for metrics
 """
-parser.add_argument("--losses", default=["structure_loss", "value_loss"], nargs="+")
-parser.add_argument("--losses_weights", default=[1, 1], nargs="+")
+parser.add_argument("--losses", default=["structure_loss", "value_loss"], nargs="+", type=str)
+parser.add_argument("--losses_weights", default=[1, 1], nargs="+", type = int)
 # parser.add_argument('--losses', default=['value_loss'], nargs='+')
 # parser.add_argument('--losses_weights', default=[1], nargs='+')
 parser.add_argument("--simple_loss", default=False, type=bool)

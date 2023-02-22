@@ -378,8 +378,8 @@ class GetDepth():
         prediction = midas(input_batch)
         # prediction = (prediction/prediction.max())
         # prediction = 1/(nn.Sigmoid()(prediction)*100+0.01)
-        prediction = 1/prediction  
-        prediction = 100 *(prediction-prediction.min())/(prediction.max()-prediction.min())+0.01
+        # prediction = 1/prediction  
+        prediction = 256 *(prediction-prediction.min())/(prediction.max()-prediction.min())+0.01
         return prediction.unsqueeze(0)
         
 
@@ -460,13 +460,14 @@ class MyMap():
 def main():
     reader = ImageReader_RealEstate10K('/home/xxy/Documents/data/RealEstate10K/test/0a9f2831a3e73de8.txt',
                                        '/home/xxy/Downloads/tmp_data/0a9f2831a3e73de8')
-    GD = GetDepth('synsin')
+    GD = GetDepth('midas')
     
     img_name, K, P1 = reader.get_one_frame(50)
     
     name2, _, P2 = reader.get_one_frame(20)
     # T = reader.get_relative_parameters(P1, P2)
     print(img_name, name2)
+    img_name = '/home/xxy/Documents/data/pixel-nerf/dtu_dataset/rs_dtu_4/DTU/scan98/image/000037.png'
     depth = GD.get_depth(img_name)
     # M = MyMap()
     # M.map(img_name, name2, depth.squeeze().detach().cpu().numpy(), K, T)
